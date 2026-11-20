@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{NAME}} Matrix</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #050a07; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  .term {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 800px; background: rgba(8, 14, 10, 0.88);
+    border: 2px solid rgba(0, 255, 120, 0.8); box-shadow: 0 0 30px rgba(0, 255, 120, 0.25);
+    font-family: Consolas, 'Cascadia Mono', monospace; color: #00ff78;
+  }
+  .bar { height: 30px; background: #003c1e; display: flex; align-items: center; padding-left: 12px; position: relative; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; }
+  .bar span { position: absolute; left: 0; right: 0; text-align: center; font-size: 13px; color: #90ee90; }
+  .body { padding: 16px 28px 22px; font-size: 22px; line-height: 34px; white-space: pre; }
+  .w { color: #dcebe1; } .d { color: #5aaa78; }
+  .cursor { display: inline-block; width: 12px; height: 22px; background: #00ff78; vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<div class="term">
+  <div class="bar">
+    <div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#27c93f"></div>
+    <span>{{USER}}@{{HOST}}: ~</span>
+  </div>
+  <div class="body" id="body"></div>
+</div>
+<script>
+// ---------- Terminal (types itself out once, then shows a live clock) ----------
+const lines = [
+  ['g', 'C:\\> whoami'],
+  ['w', '  {{NAME}}'],
+  ['g', 'C:\\> sysinfo --short'],
+  ['d', '  HOST   {{HOST}}'],
+  ['d', '  OS     {{OS}}'],
+  ['d', '  CPU    {{CPU}}'],
+  ['d', '  GPU    {{GPU}}'],
+  ['d', '  RAM    {{RAM}}'],
+  ['g', 'C:\\> echo $MOTTO'],
+  ['w', '  "There is no place like 127.0.0.1"'],
+  ['g', 'C:\\> time'],
+  ['w', '  __CLOCK__'],
+];
+const body = document.getElementById('body');
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const clock = () => new Date().toLocaleTimeString('en-GB');
+let shown = 0, chars = 0;
+function render() {
+  let html = '';
+  for (let i = 0; i < shown && i < lines.length; i++) {
+    const [cls, txt] = lines[i];
+    const t = txt.replace('__CLOCK__', clock());
+    html += `<span class="${cls}">${esc(i === shown - 1 && shown <= lines.length ? t.slice(0, chars) : t)}</span>\n`;
+  }
+  if (shown > lines.length || (shown === lines.length && chars >= lines[lines.length - 1][1].length))
+    html += 'C:\\> <span class="cursor"></span>';
+  body.innerHTML = html;
+}
+function type() {
+  if (shown === 0) { shown = 1; chars = 0; }
+  const cur = lines[shown - 1][1].replace('__CLOCK__', clock());
+  if (chars < cur.length) { chars++; render(); setTimeout(type, lines[shown - 1][0] === 'g' ? 45 : 12); }
+  else if (shown < lines.length) { shown++; chars = 0; render(); setTimeout(type, 180); }
+  else { shown = lines.length + 1; render(); setInterval(render, 1000); }
+}
+setTimeout(type, 600);
+
+// ---------- Matrix rain ----------
+const cv = document.getElementById('rain'), ctx = cv.getContext('2d');
+const glyphs = '01';   // binary rain
+const CW = 20, CH = 22;
+let cols, drops, speeds, last, dpr;
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#050a07'; ctx.fillRect(0, 0, innerWidth, innerHeight);
+  cols = Math.ceil(innerWidth / CW);
+  drops = Array.from({ length: cols }, () => -Math.random() * 60);
+  speeds = Array.from({ length: cols }, () => 0.3 + Math.random() * 0.55);
+  last = new Array(cols).fill(-1);
+}
+addEventListener('resize', resize); resize();
+ctx.textBaseline = 'top';
+const pick = () => glyphs[(Math.random() * glyphs.length) | 0];
+let prev = 0;
+function frame(t) {
+  requestAnimationFrame(frame);
+  if (t - prev < 33) return;            // ~30 fps keeps CPU low
+  prev = t;
+  ctx.fillStyle = 'rgba(5, 10, 7, 0.10)';
+  ctx.fillRect(0, 0, innerWidth, innerHeight);
+  ctx.font = 'bold 17px Consolas, "Cascadia Mono", monospace';
+  const rows = innerHeight / CH;
+  for (let i = 0; i < cols; i++) {
+    drops[i] += speeds[i];
+    const row = drops[i] | 0;
+    if (row !== last[i] && row >= 0) {
+      if (last[i] >= 0) { ctx.fillStyle = '#00d264'; ctx.fillText(pick(), i * CW, last[i] * CH); }
+      ctx.fillStyle = '#d7ffe1'; ctx.fillText(pick(), i * CW, row * CH);
+      last[i] = row;
+    }
+    if (row > rows && Math.random() > 0.97) { drops[i] = -Math.random() * 20; last[i] = -1; speeds[i] = 0.3 + Math.random() * 0.55; }
+  }
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

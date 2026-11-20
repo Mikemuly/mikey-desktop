@@ -1,0 +1,14 @@
+{
+  "AppVersion": "1.0.0.0",
+  "Title": "Mikey Matrix",
+  "Thumbnail": "thumb.png",
+  "Preview": null,
+  "Desc": "Falling Matrix code with Mikey's terminal and a live clock.",
+  "Author": "MIKEY-BOT",
+  "License": null,
+  "Contact": null,
+  "Type": 1,
+  "FileName": "index.html",
+  "Arguments": null,
+  "IsAbsolutePath": false
+}

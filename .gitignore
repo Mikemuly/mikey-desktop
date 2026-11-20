@@ -1,0 +1,27 @@
+# Generated voice clips (re-created by install.ps1 / app/voice/record.py)
+app/voice/*.mp3
+
+# Python virtual environment for edge-tts
+tts-venv/
+.venv/
+__pycache__/
+
+# Build output
+*.scr
+*.exe
+app/code-folder.ico
+
+# Per-user runtime files the bot writes
+position.txt
+config.txt
+notes.txt
+voice-commands.txt
+desktop.ini
+
+# OS / editor junk
+Thumbs.db
+.vscode/
+*.bak-*
+
+# cached chime generated on first run
+app/voice/*.wav
